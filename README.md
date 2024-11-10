@@ -44,6 +44,10 @@ For detailed information run `poetry run python -m servers_com --help` or
 
 * `poetry run pre-commit install`
 
+#### Testing
+
+* `poetry run pytest`
+
 ## Help
 
 Issue tracker: https://github.com/koldakov/servers-com/issues.
