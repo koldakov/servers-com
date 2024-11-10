@@ -1,5 +1,5 @@
 from random import choice
-from typing import Any, Self
+from typing import Any, ClassVar, NamedTuple, Self
 
 
 class Node:
@@ -31,7 +31,27 @@ def _connect_nodes(nodes: list[Node], /) -> None:
             node.next = choice([n for n in nodes if n != node])  # noqa: S311
 
 
+class GraphBaseError(Exception):
+    """Graph Base Error."""
+
+
+class ConnectionPercentViolationError(GraphBaseError):
+    """Connection Percent Violation Error."""
+
+
+class NodesAmountViolationError(GraphBaseError):
+    """Nodes Amount Violation Error."""
+
+
+class MinMax(NamedTuple):
+    min: int
+    max: int
+
+
 class Graph:
+    connection_percent_cond: ClassVar[MinMax] = MinMax(min=0, max=100)
+    nodes_amount_cond: ClassVar[MinMax] = MinMax(min=0, max=999)
+
     def __init__(
         self,
         nodes: list[Node],
@@ -46,6 +66,12 @@ class Graph:
         nodes_amount: int = 100,
         connection_percent: int = 80,
     ) -> Self:
+        if connection_percent < cls.connection_percent_cond.min or connection_percent > cls.connection_percent_cond.max:
+            raise ConnectionPercentViolationError() from None
+
+        if nodes_amount < cls.nodes_amount_cond.min or nodes_amount > cls.nodes_amount_cond.max:
+            raise NodesAmountViolationError() from None
+
         connected_nodes_len: int = int(nodes_amount * connection_percent / 100)
 
         connected_nodes: list[Node] = [Node(None) for _ in range(connected_nodes_len)]

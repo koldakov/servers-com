@@ -1,8 +1,16 @@
 import matplotlib.pyplot
 from networkx import DiGraph, draw, spring_layout
 
-from servers_com.graph import Graph
+from servers_com.graph import ConnectionPercentViolationError, Graph, NodesAmountViolationError
 from servers_com.utils import metadata
+
+
+class ApplicationBaseError(Exception):
+    """Application Base Error."""
+
+
+class EdgeSizeViolationError(ApplicationBaseError):
+    """Edge Size Violation Error."""
 
 
 class Application:
@@ -17,11 +25,26 @@ class Application:
         self.edge_size: int | None = edge_size
         self.connection_percent: int = connection_percent
 
-        self.graph: Graph = Graph.random(
-            nodes_amount=nodes_amount,
-            connection_percent=connection_percent,
-        )
+        try:
+            self.graph: Graph = Graph.random(
+                nodes_amount=nodes_amount,
+                connection_percent=connection_percent,
+            )
+        except (ConnectionPercentViolationError, NodesAmountViolationError):
+            raise
+
         self.di_graph: DiGraph = DiGraph()
+
+    @property
+    def edge_size(self) -> int | None:
+        return self._edge_size
+
+    @edge_size.setter
+    def edge_size(self, edge_size: int | None) -> None:
+        if edge_size is not None and edge_size < 0:
+            raise EdgeSizeViolationError("Edge size must be more than 0") from None
+
+        self._edge_size = edge_size
 
     @property
     def di_graph(self) -> DiGraph:
