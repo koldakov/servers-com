@@ -14,11 +14,31 @@ You need:
 
 ## Getting Started
 
+### Requirements
+
+* Python3.12
+
 ### Installation
 
 * `git clone https://github.com/koldakov/servers-com && cd servers-com`
 * Install [poetry](https://python-poetry.org/)
 * `poetry install`
+
+### Installation (without poetry)
+
+* `git clone https://github.com/koldakov/servers-com && cd servers-com`
+* `python3 -m venv .venv`
+* `source .venv/bin/activate`
+* `pip install .`
+
+### Usage
+
+* To run with poetry run `poetry run python -m servers_com`
+* To run without poetry activate virtual env with `source .venv/bin/activate`
+and run with `python -m servers_com`
+
+For detailed information run `poetry run python -m servers_com --help` or
+`python -m servers_com --help` with activated environment.
 
 #### Development
 
