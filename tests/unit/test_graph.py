@@ -26,9 +26,10 @@ class TestGraphRandomCase:
 
         assert len(graph.nodes) == nodes_amount
 
+    def test_set_limits_sets_two_connection_limits_when_eight_nodes_provided(self):
+        graph: Graph = Graph([Node(n) for n in range(8)])
+        assert not graph.limited_nodes
 
-class TestNodeCase:
-    def test_node_setter_should_raise_value_error_when_the_same_node_is_provided(self):
-        node: Node = Node(None)
-        with raises(ValueError):
-            node.next = node
+        graph.set_limits()
+
+        assert len([n for n in graph.nodes if n.connections_limit is not None]) == 2  # noqa: PLR2004

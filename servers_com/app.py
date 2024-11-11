@@ -1,6 +1,13 @@
-from argparse import ArgumentParser, ArgumentTypeError, Namespace
+import sys
+from argparse import ArgumentParser, ArgumentTypeError, BooleanOptionalAction, Namespace
 
-from servers_com.graph import ConnectionPercentViolationError, Graph, NodesAmountViolationError
+from servers_com.graph import (
+    ConnectionPercentViolationError,
+    Graph,
+    GraphConfigurationError,
+    MinRandConnectionsViolationError,
+    NodesAmountViolationError,
+)
 from servers_com.ui import Application, EdgeSizeViolationError
 
 
@@ -30,6 +37,29 @@ def _parse_args() -> Namespace:
         type=int,
         help="Optimal distance between nodes. Must be more than 0.",
     )
+    parser.add_argument(
+        "--allow-loops",
+        dest="allow_loops",
+        action=BooleanOptionalAction,
+        default=False,
+        help="Allow nodes to be connected to itself.",
+    )
+    parser.add_argument(
+        "--cli-only",
+        dest="cli_only",
+        action=BooleanOptionalAction,
+        default=False,
+        help="Print nodes in format: [(node_id, connection_limit, [connection_1, connection_2]),].",
+    )
+    parser.add_argument(
+        "--min-rand-connections",
+        dest="min_rand_connections",
+        type=int,
+        default=2,
+        help="Connections for --connection-percent selected randomly between 2 and --min-rand-connections. "
+        "Keep in mind this option does not guarantee than connection has exactly or less than "
+        "--min-rand-connections connections.",
+    )
 
     return parser.parse_args()
 
@@ -41,7 +71,9 @@ def run():
         app: Application = Application(
             args.nodes_amount,
             args.connection_percent,
+            args.allow_loops,
             edge_size=args.edge_size,
+            min_rand_connections=args.min_rand_connections,
         )
     except ConnectionPercentViolationError:
         raise ArgumentTypeError(
@@ -54,5 +86,16 @@ def run():
         ) from None
     except EdgeSizeViolationError:
         raise ArgumentTypeError("--edge-size must be more than 0") from None
+    except MinRandConnectionsViolationError:
+        raise ArgumentTypeError(
+            "--min-rand-connections must be more than 2 and less than (nodes-amount / 2 + 1)"
+        ) from None
+    except GraphConfigurationError:
+        raise ArgumentTypeError(
+            "Graph configurations error. " "Perhaps, there are not enough edges to meet the requirements."
+        ) from None
 
-    app.visualize()
+    if args.cli_only is False:
+        app.visualize()
+    else:
+        sys.stdout.write(str(app.graph.human_readable_nodes()))

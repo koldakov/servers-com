@@ -1,7 +1,13 @@
 import matplotlib.pyplot
 from networkx import DiGraph, draw, spring_layout
 
-from servers_com.graph import ConnectionPercentViolationError, Graph, NodesAmountViolationError
+from servers_com.graph import (
+    ConnectionPercentViolationError,
+    Graph,
+    GraphConfigurationError,
+    MinRandConnectionsViolationError,
+    NodesAmountViolationError,
+)
 from servers_com.utils import metadata
 
 
@@ -14,13 +20,15 @@ class EdgeSizeViolationError(ApplicationBaseError):
 
 
 class Application:
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         nodes_amount: int,
         connection_percent: int,
+        allow_loop_connections: bool,
         /,
         *,
         edge_size: int | None = None,
+        min_rand_connections: int = 2,
     ) -> None:
         self.edge_size: int | None = edge_size
         self.connection_percent: int = connection_percent
@@ -29,8 +37,15 @@ class Application:
             self.graph: Graph = Graph.random(
                 nodes_amount=nodes_amount,
                 connection_percent=connection_percent,
+                allow_loop_connections=allow_loop_connections,
+                min_rand_connections=min_rand_connections,
             )
-        except (ConnectionPercentViolationError, NodesAmountViolationError):
+        except (
+            ConnectionPercentViolationError,
+            MinRandConnectionsViolationError,
+            NodesAmountViolationError,
+            GraphConfigurationError,
+        ):
             raise
 
         self.di_graph: DiGraph = DiGraph()
@@ -53,10 +68,10 @@ class Application:
     @di_graph.setter
     def di_graph(self, graph: DiGraph, /) -> None:
         for node in self.graph.nodes:
-            if node.next is not None:
-                graph.add_edge(hash(node), hash(node.next))
-            else:
-                graph.add_node(hash(node))
+            for connection in node.connections:
+                graph.add_edge(node.id, connection.id)
+            if not node.connections:
+                graph.add_node(node.id)
 
         self._di_graph = graph
 
@@ -65,7 +80,7 @@ class Application:
             self.di_graph,
             pos,
             with_labels=True,
-            arrows=True,
+            arrows=False,
         )
 
     @property
@@ -78,8 +93,10 @@ class Application:
     @property
     def title(self) -> str:
         return (
-            f"Graph with single 'next' connection per Node. Graph has {len(self.graph.nodes)} "
-            f"nodes with connection percent={self.connection_percent}. Ver. {metadata["version"]}."
+            f"Graph has {len(self.graph.nodes)} nodes with connection percent={self.connection_percent}. "
+            f"List of nodes that have limit({self.graph.connection_limit}) connections: "
+            f"{", ".join([str(i.id) for i in self.graph.limited_nodes])}. "
+            f"Ver. {metadata["version"]}."
         )
 
     def visualize(self):
