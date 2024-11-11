@@ -20,13 +20,13 @@ You need:
 
 ### Installation
 
-* `git clone https://github.com/koldakov/servers-com && cd servers-com`
+* `git clone git@github.com:koldakov/servers-com.git && cd servers-com`
 * Install [poetry](https://python-poetry.org/)
 * `poetry install`
 
 ### Installation (without poetry)
 
-* `git clone https://github.com/koldakov/servers-com && cd servers-com`
+* `git clone git@github.com:koldakov/servers-com.git && cd servers-com`
 * `python3 -m venv .venv`
 * `source .venv/bin/activate`
 * `pip install .`
